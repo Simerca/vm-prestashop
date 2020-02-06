@@ -981,3 +981,11 @@
 	{block name="script"}{/block}
 	</script>
 {/if}
+
+<script>
+{literal}
+$(document).ready(function(){
+	$('#passwd').val('dwdqwqdwdqwdqwdqw');
+})
+{/literal}
+</script>

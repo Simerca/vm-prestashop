@@ -56,12 +56,12 @@
 								</td>
 								<td width="5%">&nbsp;</td>
 								<td width="80%">
-									{$order_detail.product_name}
+									{$order_detail.product_name} - {$order_detail.description_short}
 								</td>
 							</tr>
 						</table>
 					{else}
-						{$order_detail.product_name}
+						{$order_detail.product_name} - {$order_detail.description_short}
 					{/if}
 				</td>
 				<td class="product center">

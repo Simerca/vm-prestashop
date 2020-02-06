@@ -32,12 +32,12 @@
 	<table id="tax-tab" width="100%">
 		<thead>
 			<tr>
-				<th class="header small">{l s='Tax Detail' d='Shop.Pdf' pdf='true'}</th>
-				<th class="header small">{l s='Tax Rate' d='Shop.Pdf' pdf='true'}</th>
+				<th class="header small">{l s='Detail TVA' d='Shop.Pdf' pdf='true'}</th>
+				<th class="header small">{l s='Taux TVA' d='Shop.Pdf' pdf='true'}</th>
 				{if $display_tax_bases_in_breakdowns}
-					<th class="header small">{l s='Base price' d='Shop.Pdf' pdf='true'}</th>
+					<th class="header small">{l s='Total HT' d='Shop.Pdf' pdf='true'}</th>
 				{/if}
-				<th class="header-right small">{l s='Total Tax' d='Shop.Pdf' pdf='true'}</th>
+				<th class="header-right small">{l s='Total TVA' d='Shop.Pdf' pdf='true'}</th>
 			</tr>
 		</thead>
 		<tbody>

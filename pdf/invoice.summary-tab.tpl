@@ -28,6 +28,9 @@
 		<th class="header small" valign="middle">{l s='Invoice Date' d='Shop.Pdf' pdf='true'}</th>
 		<th class="header small" valign="middle">{l s='Order Reference' d='Shop.Pdf' pdf='true'}</th>
 		<th class="header small" valign="middle">{l s='Order date' d='Shop.Pdf' pdf='true'}</th>
+		<th class="header small" valign="middle">{l s='Date de Retrait' d='Shop.Pdf' pdf='true'}</th>
+		<th class="header small" valign="middle">{l s='Heure de retrait' d='Shop.Pdf' pdf='true'}</th>
+		<th class="header small" valign="middle">{l s='Boutique de retrait' d='Shop.Pdf' pdf='true'}</th>
 		{if $addresses.invoice->vat_number}
 			<th class="header small" valign="middle">{l s='VAT Number' d='Shop.Pdf' pdf='true'}</th>
 		{/if}
@@ -37,6 +40,23 @@
 		<td class="center small white">{dateFormat date=$order->invoice_date full=0}</td>
 		<td class="center small white">{$order->getUniqReference()}</td>
 		<td class="center small white">{dateFormat date=$order->date_add full=0}</td>
+		<td class="center small white">{$order->date_retrait|date_format:"%d/%m/%y"}</td>
+		<td class="center small white">{$order->heure_retrait}</td>
+		{if $order->boutique_retrait == 2}
+			<td class="center small white">Bordeaux Bègles</td>
+		{/if}
+		{if $order->boutique_retrait == 3}
+			<td class="center small white">Saint-Médard-en-Jalles</td>
+		{/if}
+		{if $order->boutique_retrait == 4}
+			<td class="center small white">Bordeaux Bègles</td>
+		{/if}
+		{if $order->boutique_retrait == 5}
+			<td class="center small white">Saint-Médard-en-Jalles</td>
+		{/if}
+		{if $order->boutique_retrait == 6}
+			<td class="center small white">Canéjan</td>
+		{/if}
 		{if $addresses.invoice->vat_number}
 			<td class="center small white">
 				{$addresses.invoice->vat_number}

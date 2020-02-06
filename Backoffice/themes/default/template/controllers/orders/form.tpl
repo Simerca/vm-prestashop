@@ -79,6 +79,9 @@
 		$('#id_lang').change(function(){
 			updateLang();
 		});
+		$('#boutique_facturation').change(function(e){
+			updateBoutique(e.target.val());
+		});
 		$('#delivery_option,#carrier_recycled_package,#order_gift,#gift_message').change(function() {
 			updateDeliveryOption();
 		});
@@ -267,8 +270,10 @@
 				dataType: 'json',
 				data : query,
 				success : function(data) {
-					if (data.result)
-						$('#payment_module_name').replaceWith(data.view)
+					if (data.result){
+						
+					}
+						// $('#payment_module_name').replaceWith(data.view)
 				}
 			});
 		});
@@ -352,6 +357,25 @@
 				id_product_attribute: id_product_attribute,
 				id_customer: id_customer,
 				price: ps_round(new Number(new_price.replace(",",".")), 6).toString()
+				},
+			success : function(res)
+			{
+				displaySummary(res);
+			}
+		});
+	}
+
+	function updateBoutique(idBoutique)
+	{
+		$.ajax({
+			type:"POST",
+			url: "{$link->getAdminLink('AdminCarts')|addslashes}",
+			data : {
+				ajax: "1",
+				token: "{getAdminToken tab='AdminCarts'}",
+				tab: "AdminCarts",
+				action: "updateProductPrice",
+				boutique_facturation:idBoutique
 				},
 			success : function(res)
 			{
@@ -523,11 +547,11 @@
 
 	function setupCustomer(idCustomer)
 	{
-		$('#carts').show();
+		$('#carts').hide();
 		$('#products_part').show();
 		$('#vouchers_part').show();
 		$('#address_part').show();
-		$('#carriers_part').show();
+		$('#carriers_part').hide();
 		$('#summary_part').show();
 		var address_link = $('#new_address').attr('href');
 		id_customer = idCustomer;
@@ -628,6 +652,7 @@
 			success : function(res)
 			{
 				var products_found = '';
+				var product_images = '';
 				var attributes_html = '';
 				var customization_html = '';
 				stock = {};
@@ -639,10 +664,17 @@
 					else
 						customization_errors = false;
 					$('#products_found').show();
+					
 					products_found += '<label class="control-label col-lg-3">{l s='Product' d='Admin.Global' js=1}</label><div class="col-lg-6"><select id="id_product" onclick="display_product_attributes();display_product_customizations();"></div>';
 					attributes_html += '<label class="control-label col-lg-3">{l s='Combination' d='Admin.Global' js=1}</label><div class="col-lg-6">';
 					$.each(res.products, function() {
-						products_found += '<option '+(this.combinations.length > 0 ? 'rel="'+this.qty_in_stock+'"' : '')+' value="'+this.id_product+'">'+this.name+(this.combinations.length == 0 ? ' - '+this.formatted_price : '')+'</option>';
+						console.log('PRODUCT');
+						console.log(this);
+						console.log('PRODUCT');
+						if(this.image != ""){
+							product_images += '<div class="col-md-3 text-center"><img src="'+this.image+'" class="img img-thumbnail"><br>'+this.name+'<br>'+this.description_courte+'<br>'+this.formatted_price+'</div>';
+						}
+						products_found += '<option '+(this.combinations.length > 0 ? 'rel="'+this.qty_in_stock+'"' : '')+' value="'+this.id_product+'">'+this.name+(this.combinations.length == 0 ? ' - '+this.description_courte+' - '+this.formatted_price : '')+'</option>';
 						attributes_html += '<select class="id_product_attribute" id="ipa_'+this.id_product+'" style="display:none;">';
 						var id_product = this.id_product;
 						stock[id_product] = new Array();
@@ -678,6 +710,7 @@
 					});
 					products_found += '</select></div>';
 					$('#products_found #product_list').html(products_found);
+					$('#productsImage').html(product_images);
 					$('#products_found #attributes_list').html(attributes_html);
 					$('link[rel="stylesheet"]').each(function (i, element) {
 						sheet = $(element).clone();
@@ -728,6 +761,10 @@
 	{
 		var cart_content = '';
 		$.each(products, function() {
+
+			console.log('UPDATE CARTE');
+			console.log(this);
+			console.log('UPDATE CARTE');
 			var id_product = Number(this.id_product);
 			var id_product_attribute = Number(this.id_product_attribute);
 			cart_quantity[Number(this.id_product)+'_'+Number(this.id_product_attribute)+'_'+Number(this.id_customization)] = this.cart_quantity;
@@ -735,7 +772,7 @@
 			cart_content += (!this.id_customization ? '<div class="input-group fixed-width-md"><div class="input-group-btn"><a href="#" class="btn btn-default increaseqty_product" rel="'+this.id_product+'_'+this.id_product_attribute+'_'+(this.id_customization ? this.id_customization : 0)+'" ><i class="icon-caret-up"></i></a><a href="#" class="btn btn-default decreaseqty_product" rel="'+this.id_product+'_'+this.id_product_attribute+'_'+(this.id_customization ? this.id_customization : 0)+'"><i class="icon-caret-down"></i></a></div>' : '');
 			cart_content += (!this.id_customization ? '<input type="text" rel="'+this.id_product+'_'+this.id_product_attribute+'_'+(this.id_customization ? this.id_customization : 0)+'" class="cart_quantity" value="'+this.cart_quantity+'" />' : '');
 			cart_content += (!this.id_customization ? '<div class="input-group-btn"><a href="#" class="delete_product btn btn-default" rel="delete_'+this.id_product+'_'+this.id_product_attribute+'_'+(this.id_customization ? this.id_customization : 0)+'" ><i class="icon-remove text-danger"></i></a></div></div>' : '');
-			cart_content += '</td><td>' + formatCurrency(this.numeric_total, currency_format, currency_sign, currency_blank) + '</td></tr>';
+			cart_content += '</td><td>' + formatCurrency(this.total_wt, currency_format, currency_sign, currency_blank) + '</td></tr>';
 
 			if (this.id_customization && this.id_customization != 0)
 			{
@@ -819,7 +856,7 @@
 		if (!jsonSummary.summary.products.length || !jsonSummary.addresses.length || !jsonSummary.delivery_option_list)
 			$('#carriers_part,#summary_part').hide();
 		else
-			$('#carriers_part,#summary_part').show();
+			$('#summary_part').show();
 
 		updateDeliveryOptionList(jsonSummary.delivery_option_list);
 
@@ -1060,7 +1097,7 @@
 		else
 		{
 			$('#addresses_err').hide();
-			$('#address_delivery, #address_invoice').show();
+			$('#address_invoice').show();
 		}
 
 		$('#id_address_delivery').html(addresses_delivery_options);
@@ -1186,8 +1223,231 @@
 		</div>
 	</div>
 
-{capture name=order_action_name assign=order_action_name}submitAdd{$table|escape:'html':'UTF-8'}{/capture}
+	{capture name=order_action_name assign=order_action_name}submitAdd{$table|escape:'html':'UTF-8'}{/capture}
 <form class="form-horizontal" action="{$link->getAdminLink('AdminOrders', true, [], [$order_action_name => 1])|escape:'html':'UTF-8'}" method="post" autocomplete="off">
+
+
+	<div class="panel" style="">
+		<label>Boutique de Facturation</label>
+		<select name="boutique_facturation" class="form-control">
+			<option value="2">Begles</option>
+                        <option value="3">Saint-Médard-en-Jalles</option> 
+		</select>
+	</div>
+	<div class="panel" style="">
+		<label>Boutique de Retrait</label>
+		<select name="boutique_retrait" class="form-control">
+						{if $id_shop == 2}
+							<option value="2">Begles</option>
+						{/if}
+						{if $id_shop == 3}
+                        <option value="3">Saint-Médard-en-Jalles</option>
+						{/if}
+						{if $id_shop == 6}
+                        <option value="6">Canejan</option>
+						{/if}
+						{if $id_shop == 4}
+                        <option value="4">Begles Fete</option>
+						{/if}
+						{if $id_shop == 5}
+                        <option value="5">Saint-Médard-en-Jalles Fetes</option>
+						{/if}
+		</select>
+	</div>
+
+
+
+	
+
+	<div class="panel">
+
+	    <script src="/assets/js/zabuto_calendar.js"></script>
+    <script src="/assets/js/bootstrap-notify.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js" integrity="sha256-AdQN98MVZs44Eq2yTwtoKufhnU+uZ7v2kXnD5vqzZVo=" crossorigin="anonymous"></script>
+
+	
+    <script src="https://kit.fontawesome.com/03b1b5513b.js"></script>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    
+    <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="Stylesheet" type="text/css" />
+
+<link href="/assets/css/custom.css" rel="Stylesheet" type="text/css" />
+<script src="/assets/js/bootstrap-notify.js" type="text/javascript"></script>
+
+<link rel="stylesheet" type="text/css" href="/assets/css/zabuto_calendar.min.css">
+
+<div class="container">
+
+    <div class="row">
+
+    <div class="col-md-12 text-center text-vm my-5">
+    
+        <h3>Sélectionner un jour de retrait</h3>
+    
+    </div>
+
+    <div class="col-md-5 mx-auto col-xs-12">
+
+        <div id="calendar"></div>
+
+        <script type="application/javascript">
+
+            {literal}
+
+            $(document).ready(function () {
+                
+                $("#calendar").zabuto_calendar({
+                    language:'fr',
+                    ajax: { url:'https://vents-et-marees.com/modules/appvmshop/ajax/getDateDispo?id_shop={/literal}{$id_shop}{literal}'},
+                    action: function () {
+                        //get the selected date
+                        var date = $('#' + this.id).data('date');
+                        var hasEvent = $("#" + this.id).data("hasEvent");
+                        //alert the date
+                        $.ajax({
+                            url:'https://vents-et-marees.com/modules/appvmshop/ajax/getTemplate?id_shop={/literal}{$id_shop}{literal}',
+							type:'get',
+                            data:{date:$('#' + this.id).data('date')},
+                            success(response){
+                                console.log(response);
+                                response = JSON.parse(response);
+                                
+                                console.log(hasEvent);
+                                if(hasEvent){
+                                formatForm(response, date);
+                                }else{
+                                    $('#zoneCrenaux').html('');
+                                }
+
+                            }
+                        })
+                    }
+                    });
+            });
+            window.dayTest = [];
+            function formatForm(day, selectdate){
+
+                window.dayTest = Object.keys(day).map(i => day[i]);
+                // day = Object.values(day);
+
+                console.log(day);
+                selectdate = new Date(selectdate);
+                var currentDateNb = selectdate.getDay();
+                console.log('currentDateNb');
+                console.log(currentDateNb);
+                console.log('currentDateNb');
+
+				console.log('SELECT DATE');
+                console.log(selectdate);
+				console.log('SELECT DATE');
+
+				
+
+                var currentDay = getDayFromNb(currentDateNb);
+
+				console.log('SELECT DATE');
+				console.log(selectdate.toLocaleDateString('fr-FR'))
+				console.log('SELECT DATE');
+
+				$('#date_retrait').val(selectdate.toLocaleDateString('fr-FR'))
+				
+				var selectFormatDateUS = moment(selectdate).format("YYYY-MM-DD");
+
+				console.log('SELECT DATE US');
+				console.log(selectFormatDateUS);
+				console.log('SELECT DATE US');
+
+                var output = '';
+                for(let [key, value] of Object.entries(day)){
+
+						console.log('CURRENT DAY');
+						console.log(currentDay);
+						console.log('CURRENT DAY');
+						console.log('selectFormatDateUS DAY');
+						console.log(selectFormatDateUS);
+						console.log('selectFormatDateUS DAY');
+						console.log('KEY DAY');
+						console.log(key);
+						console.log('Key DAY');
+
+                        if(currentDay == key || selectFormatDateUS == key){
+                            output += '<div class="col-md-12">';
+                            output += `<h4>${key}</h4>`;
+                            output += '<div class="row">';
+                            console.log(value);
+                            value.forEach(function(heure){
+                                output+= '<div class="col-md-4 my-1">';
+                                output+= '<a href="javascript:void(0)" onclick="$(\'#heure_retrait\').val(\''+heure+'\')" class="btn btn-info">'+heure+'</a>';
+                                output += '</div>';
+                            })
+                            output += '</div>';
+                            output += '</div>';
+                        }
+                    
+
+                };
+                console.log(output);
+                $('#zoneCrenaux').html(output);
+
+            }
+
+            function getDayFromNb(nb){
+
+                if(nb==0){
+                    return "Dimanche";
+                }else if(nb==1){
+                    return "Lundi"
+                }else if(nb==2){
+                    return "Mardi"
+                }else if(nb==3){
+                    return "Mercredi"
+                }else if(nb==4){
+                    return "Jeudi"
+                }else if(nb==5){
+                    return "Vendredi"
+                }else if(nb==6){
+                    return "Samedi"
+                }
+
+            }
+
+            {/literal}
+
+        </script>
+
+    </div>
+
+</div>
+
+    <div class="col-md-5 mx-auto col-xs-12">
+            <div class="row" id="zoneCrenaux"></div>
+    </div>
+
+
+	
+
+</div>
+ 
+
+	</div>
+
+	<div class="panel">
+
+		<h3>Vous avez selectionner</h3>
+	
+		<div class="form-group">
+		<label>Date de retrait</label>
+		<input type="text" id="date_retrait" name="date_retrait" class="form-control" required>
+		</div>
+		<label>Heure de retrait</label>
+		<div class="form-group">
+			<input type="text" id="heure_retrait" name="heure_retrait" class="form-control" required>
+		</div>
+
+	</div>
+
 	<div class="panel" id="products_part" style="display:none;">
 		<div class="panel-heading">
 			<i class="icon-shopping-cart"></i>
@@ -1210,6 +1470,8 @@
 			</div>
 		</div>
 
+		<div id="productsImage" class="row">
+		</div>
 		<div id="products_found">
 			<hr/>
 			<div id="product_list" class="form-group"></div>
@@ -1274,7 +1536,7 @@
 
 		<div class="form-group">
 			<div class="col-lg-9 col-lg-offset-3">
-				<div class="alert alert-warning">{l s='The prices are without taxes.' d='Admin.Orderscustomers.Notification'}</div>
+				<div class="alert alert-warning">{l s='Les prix sont TTC.' d='Admin.Orderscustomers.Notification'}</div>
 			</div>
 		</div>
 
@@ -1363,7 +1625,7 @@
 		<div id="addresses_err" class="alert alert-warning" style="display:none;"></div>
 
 		<div class="row">
-			<div id="address_delivery" class="col-lg-6">
+			<div id="address_delivery" style="display:none;" class="col-lg-6">
 				<h4>
 					<i class="icon-truck"></i>
 					{l s='Delivery' d='Admin.Global'}
@@ -1522,13 +1784,13 @@
 
 		<div class="row">
 			<div class="order_message_right col-lg-12">
-				<div class="form-group">
+				<div class="form-group" style="display:none;">
 					<label class="control-label col-lg-3" for="order_message">{l s='Order message' d='Admin.Orderscustomers.Feature'}</label>
 					<div class="col-lg-6">
 						<textarea name="order_message" id="order_message" rows="3" cols="45"></textarea>
 					</div>
 				</div>
-				<div class="form-group">
+				<div class="form-group" style="display:none;">
 					{if !$PS_CATALOG_MODE}
 					<div class="col-lg-9 col-lg-offset-3">
 						<a href="javascript:void(0);" id="send_email_to_customer" class="btn btn-default">
@@ -1546,17 +1808,18 @@
 					<label class="control-label col-lg-3">{l s='Payment' d='Admin.Global'}</label>
 					<div class="col-lg-9">
 						<select name="payment_module_name" id="payment_module_name">
-							{if !$PS_CATALOG_MODE}
-							{foreach from=$payment_modules item='module'}
-								<option value="{$module->name}" {if isset($smarty.post.payment_module_name) && $module->name == $smarty.post.payment_module_name}selected="selected"{/if}>{$module->displayName}</option>
-							{/foreach}
-							{else}
-								<option value="boorder">{l s='Back office order' d='Admin.Orderscustomers.Feature'}</option>
-							{/if}
+							<option value="ps_wirepayment">TPE</option>
+							<option value="ps_checkpayment">Espèces</option>
 						</select>
 					</div>
 				</div>
-				<div class="form-group">
+
+				<div class="form-group" style="">
+					<label>Tickets restaurants</label>
+					<input type="text" name="ticket_restaurant" class="form-control">
+				</div>
+
+				<div class="form-group"  style="display:none;">
 					<label class="control-label col-lg-3">{l s='Order status' d='Admin.Shopparameters.Feature'}</label>
 					<div class="col-lg-9">
 						<select name="id_order_state" id="id_order_state">
@@ -1566,6 +1829,9 @@
 						</select>
 					</div>
 				</div>
+
+				
+
 				<div class="form-group">
 					<div class="col-lg-9 col-lg-offset-3">
 						<button type="submit" name="submitAddOrder" {if $table}id="{$table}_submit_btn"{/if} class="btn btn-default" />

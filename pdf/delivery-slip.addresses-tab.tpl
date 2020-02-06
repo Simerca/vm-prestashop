@@ -28,7 +28,7 @@
 			{$order_invoice->shop_address}
 		</td>
 		{if !empty($invoice_address)}
-			<td width="33%">{if $delivery_address}<span class="bold">{l s='Delivery Address' d='Shop.Pdf' pdf='true'}</span><br/><br/>
+			<td width="33%">{if $delivery_address}<span class="bold">{l s='Votre adresse' d='Shop.Pdf' pdf='true'}</span><br/><br/>
 					{$delivery_address}
 				{/if}
 			</td>

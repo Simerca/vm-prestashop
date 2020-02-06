@@ -117,7 +117,15 @@
           </div>
         {/if}
 
+         
+
+
       </section>
+
+      <div class="col-12">
+          <span>En soumettant ce formulaire, j'accepte que mes données personnelles soient utilisées par Vents&Marées pour le traitement de ma demande. Depuis la loi “informatique et libertés” du 6 janvier 1978 modifiée, vous bénéficiez d’un droit d’accès et de rectification aux informations qui vous concernent. Si vous souhaitez exercer ce droit et obtenir communication des informations vous concernant, veuillez nous envoyer une demande via ce formulaire de contact</span>
+      
+      </div>
 
       <footer class="form-footer text-sm-right">
         <style>
